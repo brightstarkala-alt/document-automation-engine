@@ -6,6 +6,7 @@ from uuid import uuid4
 from app.documents import extract_placeholders
 from app.excel_processing import detect_excel_fields
 from app.image_processing import detect_fields, extract_ocr_text, pdf_to_image
+from app.services.ai_field_detection import detect_ai_fields
 
 
 @dataclass
@@ -90,17 +91,68 @@ def _detect_excel(content: bytes, ext: str) -> DetectionResult:
 
 def _detect_image(content: bytes, file_type: str) -> DetectionResult:
     image_bytes = pdf_to_image(content) if file_type == "pdf" else content
+
     field_order, field_positions = detect_fields(image_bytes)
     ocr_text = extract_ocr_text(image_bytes)
-    raw_candidates = [
-        RawCandidate(
-            id=f"c_{uuid4().hex[:8]}",
-            label=pos.get("label", pos["name"]),
-            position=pos,
-            source="ocr",
+
+    print(f"Detected line fields: {len(field_positions)}")
+
+    # Use existing line detection for forms
+    if len(field_positions) >= 20:
+        raw_candidates = [
+            RawCandidate(
+                id=f"c_{uuid4().hex[:8]}",
+                label=pos.get("label", pos["name"]),
+                position=pos,
+                source="ocr",
+            )
+            for pos in field_positions
+        ]
+
+        return DetectionResult(
+            field_order=field_order,
+            field_positions=field_positions,
+            raw_candidates=raw_candidates,
+            ocr_text=ocr_text,
+            image_bytes=image_bytes,
         )
-        for pos in field_positions
-    ]
+
+    # AI fallback for invoices, contracts, export docs, etc.
+    print("Using AI field detection")
+
+    ai_result = detect_ai_fields(ocr_text)
+
+    ai_fields = ai_result.get("fields", [])
+
+    raw_candidates = []
+    field_order = []
+    field_positions = []
+
+    for field in ai_fields:
+        name = field.get("name")
+        label = field.get("label", name)
+
+        if not name:
+            continue
+
+        field_order.append(name)
+
+        pos = {
+            "name": name,
+            "label": label,
+        }
+
+        field_positions.append(pos)
+
+        raw_candidates.append(
+            RawCandidate(
+                id=f"c_{uuid4().hex[:8]}",
+                label=label,
+                position=pos,
+                source="ai",
+            )
+        )
+
     return DetectionResult(
         field_order=field_order,
         field_positions=field_positions,
