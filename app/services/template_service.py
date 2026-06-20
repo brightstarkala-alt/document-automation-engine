@@ -64,9 +64,9 @@ async def create_draft_template(
     print(detection.ocr_text)
     print("====================")
     print("===== RAW CANDIDATES =====")
-for c in detection.raw_candidates:
-    print(c)
-print("==========================")
+    for c in detection.raw_candidates:
+        print(c)
+    print("==========================")
     enrichment = enrich_variables(
         detection.raw_candidates,
         file_type,
