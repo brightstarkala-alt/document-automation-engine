@@ -42,8 +42,24 @@ Rules:
 - Use snake_case names.
 - Return only fields that appear in the document.
 - Return valid JSON only.
+Return JSON exactly in this format:
+
+{
+  "document_type": "invoice",
+  "fields": [
+    {
+      "name": "invoice_number",
+      "label": "Invoice Number"
+    },
+    {
+      "name": "buyer_name",
+      "label": "Buyer Name"
+    }
+  ]
+}
 """
             },
+
             {
                 "role": "user",
                 "content": ocr_text[:8000]
@@ -51,5 +67,11 @@ Rules:
         ],
         temperature=0.1,
     )
+    content = response.choices[0].message.content
 
-    return json.loads(response.choices[0].message.content)
+    print("===== AI RESPONSE =====")
+    print(content)
+    print("=======================")
+
+    return json.loads(content)
+
