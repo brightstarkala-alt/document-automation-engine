@@ -61,8 +61,8 @@ async def create_draft_template(
 
     detection = detect_template_fields(content, file_type, ext)
     print("===== OCR TEXT =====")
-print(detection.ocr_text)
-print("====================")
+    print(detection.ocr_text)
+    print("====================")
     enrichment = enrich_variables(
         detection.raw_candidates,
         file_type,
