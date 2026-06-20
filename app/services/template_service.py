@@ -101,17 +101,7 @@ async def create_draft_template(
     db.add(template)
     db.commit()
     db.refresh(template)
-
-    preview_metadata = generate_preview(
-        content=content,
-        file_type=file_type,
-        ext=ext,
-        field_positions=template.field_positions,
-        field_labels=field_labels,
-        client_id=client_id,
-        template_id=template.id,
-        field_order=detection.field_order,
-    )
+    
     template.preview_metadata = preview_metadata
     db.commit()
     db.refresh(template)
