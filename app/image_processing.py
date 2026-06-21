@@ -178,14 +178,28 @@ def build_image_preview_metadata(
     labels = field_labels or {}
 
     regions = []
+
     for pos in field_positions:
         name = pos["name"]
+
+        bbox = None
+        if all(k in pos for k in ["x", "y", "w", "h"]):
+            bbox = {
+                "x": pos["x"],
+                "y": pos["y"],
+                "w": pos["w"],
+                "h": pos["h"],
+            }
+
         regions.append({
             "field_id": name,
             "variable_name": name,
-            "label_text": labels.get(name, pos.get("label", name.replace("_", " ").title())),
-            "bbox": {"x": pos["x"], "y": pos["y"], "w": pos["w"], "h": pos["h"]},
-            "source": "ocr",
+            "label_text": labels.get(
+                name,
+                pos.get("label", name.replace("_", " ").title()),
+            ),
+            "bbox": bbox,
+            "source": pos.get("source", "ai"),
         })
 
     return {
