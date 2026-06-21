@@ -166,7 +166,32 @@ def extract_ocr_text(image_bytes: bytes) -> str:
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     return pytesseract.image_to_string(img)
 
+def extract_ocr_words(image_bytes: bytes) -> list[dict]:
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
+    data = pytesseract.image_to_data(
+        img,
+        output_type=pytesseract.Output.DICT,
+    )
+
+    words = []
+
+    for i in range(len(data["text"])):
+        text = data["text"][i].strip()
+
+        if not text:
+            continue
+
+        words.append({
+            "text": text,
+            "x": int(data["left"][i]),
+            "y": int(data["top"][i]),
+            "w": int(data["width"][i]),
+            "h": int(data["height"][i]),
+        })
+
+    return words
 def build_image_preview_metadata(
     image_bytes: bytes,
     field_positions: list[dict],
