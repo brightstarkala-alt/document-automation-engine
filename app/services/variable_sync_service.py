@@ -89,6 +89,7 @@ def build_variables_schema_from_detection(
 def validate_variables_schema(schema: dict, file_type: str) -> list[str]:
     errors: list[str] = []
     variables = schema.get("variables", [])
+
     if not variables:
         errors.append("At least one variable is required")
         return errors
@@ -100,10 +101,17 @@ def validate_variables_schema(schema: dict, file_type: str) -> list[str]:
     for var in variables:
         if not var.get("name"):
             errors.append("Each variable must have a name")
+
         if file_type in ("pdf", "jpeg", "png"):
             pos = var.get("position", {})
-            if "x" not in pos:
-                errors.append(f"Variable '{var.get('name')}' missing image position")
+
+            # Coordinate templates need x/y.
+            # AI semantic templates do not.
+            if pos and any(k in pos for k in ["x", "y", "w", "h"]):
+                if "x" not in pos:
+                    errors.append(
+                        f"Variable '{var.get('name')}' missing image position"
+                    )
 
     return errors
 
