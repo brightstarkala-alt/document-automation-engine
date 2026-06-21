@@ -288,18 +288,17 @@ def overlay_and_export_pdf(
         # Skip semantic fields that don't have coordinates
         if "x" not in p or "y" not in p:
             continue
-
-        text_y = p["y"] - font_size - 3
-        if text_y < 0:
-            text_y = p["y"] + 2
+        print(
+            f"Drawing {name}='{value}' at x={p['x']} y={p['y']}"
+        )
 
         draw.text(
-            (p["x"] + 8, text_y),
+            (p["x"], p["y"]),
             value.strip(),
             fill=(0, 0, 0),
             font=font,
         )
-
+        
     out = io.BytesIO()
     img.save(out, format="PDF")
     return out.getvalue()
