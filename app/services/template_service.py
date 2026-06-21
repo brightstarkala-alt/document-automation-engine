@@ -74,6 +74,10 @@ async def create_draft_template(
     )
 
     variables_schema = build_variables_schema_from_detection(detection, enrichment)
+    print("===== VARIABLES SCHEMA =====")
+    for v in variables_schema["variables"]:
+        print(v)
+    print("============================")
     field_labels = {v["name"]: v["label"] for v in variables_schema["variables"]}
 
     settings = get_settings()
