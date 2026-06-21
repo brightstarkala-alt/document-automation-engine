@@ -5,7 +5,12 @@ from uuid import uuid4
 
 from app.documents import extract_placeholders
 from app.excel_processing import detect_excel_fields
-from app.image_processing import detect_fields, extract_ocr_text, pdf_to_image
+from app.image_processing import (
+    detect_fields,
+    extract_ocr_text,
+    extract_ocr_words,
+    pdf_to_image,
+)
 from app.services.ai_field_detection import detect_ai_fields
 
 
@@ -87,13 +92,40 @@ def _detect_excel(content: bytes, ext: str) -> DetectionResult:
         field_positions=field_positions,
         raw_candidates=raw_candidates,
     )
+def find_label_position(label: str, words: list[dict]) -> dict | None:
+    label_words = label.lower().split()
 
+    for i in range(len(words)):
+        matched = True
+
+        for j, lw in enumerate(label_words):
+            if i + j >= len(words):
+                matched = False
+                break
+
+            if words[i + j]["text"].lower() != lw:
+                matched = False
+                break
+
+        if matched:
+            first = words[i]
+            last = words[i + len(label_words) - 1]
+
+            return {
+                "x": last["x"] + last["w"] + 20,
+                "y": first["y"],
+                "w": 250,
+                "h": first["h"],
+            }
+
+    return None
 
 def _detect_image(content: bytes, file_type: str) -> DetectionResult:
     image_bytes = pdf_to_image(content) if file_type == "pdf" else content
 
     field_order, field_positions = detect_fields(image_bytes)
     ocr_text = extract_ocr_text(image_bytes)
+    ocr_words = extract_ocr_words(image_bytes)
 
     print(f"Detected line fields: {len(field_positions)}")
 
@@ -137,10 +169,16 @@ def _detect_image(content: bytes, file_type: str) -> DetectionResult:
 
         field_order.append(name)
 
+    
+        coords = find_label_position(label, ocr_words)
+
         pos = {
             "name": name,
             "label": label,
         }
+
+        if coords:
+           pos.update(coords)
 
         field_positions.append(pos)
 
