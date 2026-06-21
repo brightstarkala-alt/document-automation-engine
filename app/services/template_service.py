@@ -101,11 +101,31 @@ async def create_draft_template(
     db.add(template)
     db.commit()
     db.refresh(template)
-    
+
+    preview_metadata = None
+
+    if template.field_positions:
+        first_pos = template.field_positions[0]
+
+        # Only generate preview for coordinate-based forms
+        if "x" in first_pos:
+            preview_metadata = generate_preview(
+                content=content,
+                file_type=file_type,
+                ext=ext,
+                field_positions=template.field_positions,
+                field_labels=field_labels,
+                client_id=client_id,
+                template_id=template.id,
+                field_order=detection.field_order,
+            )
+
     template.preview_metadata = preview_metadata
+
     db.commit()
     db.refresh(template)
     return template
+      
 
 
 def update_draft_variables(
