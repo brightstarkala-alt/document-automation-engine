@@ -241,9 +241,11 @@ def overlay_and_export_pdf(
     draw = ImageDraw.Draw(img)
 
     font_size = max(16, img.size[1] // 55)
+
     try:
         font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            font_size,
         )
     except Exception:
         font = ImageFont.load_default()
@@ -251,12 +253,27 @@ def overlay_and_export_pdf(
     pos_map = {p["name"]: p for p in positions}
 
     for name, value in values.items():
-        if value and value.strip() and name in pos_map:
-            p = pos_map[name]
-            text_y = p["y"] - font_size - 3
-            if text_y < 0:
-                text_y = p["y"] + 2
-            draw.text((p["x"] + 8, text_y), value.strip(), fill=(0, 0, 0), font=font)
+        if not value or not value.strip():
+            continue
+
+        p = pos_map.get(name)
+        if not p:
+            continue
+
+        # Skip semantic fields that don't have coordinates
+        if "x" not in p or "y" not in p:
+            continue
+
+        text_y = p["y"] - font_size - 3
+        if text_y < 0:
+            text_y = p["y"] + 2
+
+        draw.text(
+            (p["x"] + 8, text_y),
+            value.strip(),
+            fill=(0, 0, 0),
+            font=font,
+        )
 
     out = io.BytesIO()
     img.save(out, format="PDF")
