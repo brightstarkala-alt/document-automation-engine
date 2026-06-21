@@ -102,7 +102,7 @@ async def create_draft_template(
     db.commit()
     db.refresh(template)
 
-    preview_metadata = None
+    preview_metadata = {}
 
     if template.field_positions:
         first_pos = template.field_positions[0]
